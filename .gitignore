@@ -1,0 +1,8 @@
+__pycache__/
+venv
+.idea
+logs/
+resources/random_maps/
+tournament/
+.ipynb_checkpoints/
+.DS_Store
