@@ -40,7 +40,6 @@ class IntrepidIbex():
         return pickle.load(open('chriweb_wolf_model.sav', 'rb'))
 
     def move_sheep(self, figure, field, sheep_model):
-        # TODO implement stuff from A1
         X_sheep = []
 
         # preprocess field to get features, add to X_field
@@ -104,21 +103,30 @@ class IntrepidIbex():
         s_feature7 = 0
         s_feature8 = 0
 
+        # determine closest food:
+        food_distance = 1000
+        food_goal = None
         for food_item in food:
-            # feature 5: determine if food within two steps up
-            if sheep_position[1] - food_item[1] <= 2 and sheep_position[1] - food_item[1] > 0:
+            distance = abs(food_item[0] - sheep_position[0]) + abs(food_item[1] - sheep_position[1])
+            if distance < food_distance:
+                food_distance = distance
+                food_goal = food_item
+
+        if food_goal != None:
+            # feature 5: determine if closest food is below the sheep
+            if sheep_position[1] - food_goal[1] < 0:
                 s_feature5 = 1
 
-            # feature 6: determine if food within two steps down
-            if sheep_position[1] - food_item[1] >= -2 and sheep_position[1] - food_item[1] < 0:
+            # feature 6: determine if closest food is above the sheep
+            if sheep_position[1] - food_goal[1] > 0:
                 s_feature6 = 1
 
-            # feature 7: determine if food within two steps left
-            if sheep_position[0] - wolf_position[0] <= 2 and sheep_position[0] - food_item[0] > 0:
+            # feature 7: determine if closest food is right of the sheep
+            if sheep_position[0] - food_goal[0] < 0:
                 s_feature7 = 1
 
-            # feature 8: determine if food within two steps right
-            if sheep_position[0] - wolf_position[0] >= -2 and sheep_position[0] - food_item[0] < 0:
+            # feature 8: determine if closest food is left of the sheep
+            if sheep_position[0] - food_goal[0] > 0:
                 s_feature8 = 1
 
         game_features.append(s_feature5)
@@ -134,7 +142,7 @@ class IntrepidIbex():
         return result
 
     def move_wolf(self, figure, field, wolf_model):
-        # TODO implement stuff from A1
+
         # create empty feature array for this game state
         game_features = []
         X_wolf = []
@@ -165,22 +173,22 @@ class IntrepidIbex():
             w_feature1 = 0
         game_features.append(w_feature1)
 
-        # feature 2: determine if the sheep is above the wolf
-        if wolf_position[1] - sheep_position[1] > 0:
+        # feature 2: determine if the sheep is below the wolf
+        if wolf_position[1] - sheep_position[1] < 0:
             w_feature2 = 1
         else:
             w_feature2 = 0
         game_features.append(w_feature2)
 
-        # feature 3: determine if the sheep is above the wolf
-        if wolf_position[1] - sheep_position[1] > 0:
+        # feature 3: determine if the sheep is left of the wolf
+        if wolf_position[0] - sheep_position[0] > 0:
             w_feature3 = 1
         else:
             w_feature3 = 0
         game_features.append(w_feature3)
 
-        # feature 4: determine if the sheep is above the wolf
-        if wolf_position[1] - sheep_position[1] > 0:
+        # feature 4: determine if the sheep is right of the wolf
+        if wolf_position[0] - sheep_position[0] < 0:
             w_feature4 = 1
         else:
             w_feature4 = 0

@@ -16,7 +16,7 @@ so they are anonymous (and your 'name' is expected to be funny, no pressure).
 
 """
 
-from config import *
+#from config import *
 import pickle
 
 def get_class_name():
