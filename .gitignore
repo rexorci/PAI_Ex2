@@ -6,3 +6,4 @@ resources/random_maps/
 tournament/
 .ipynb_checkpoints/
 .DS_Store
+training_data/

@@ -70,38 +70,10 @@ class IntrepidIbex():
                 x += 1
             y += 1
 
-        # feature 1: determine if wolf within two steps up
-        if sheep_position[1] - wolf_position[1] <= 2 and sheep_position[1] - wolf_position[1] > 0:
-            s_feature1 = 1
-        else:
-            s_feature1 = 0
-        game_features.append(s_feature1)
-
-        # feature 2: determine if wolf within two steps down
-        if sheep_position[1] - wolf_position[1] >= -2 and sheep_position[1] - wolf_position[1] < 0:
-            s_feature2 = 1
-        else:
-            s_feature2 = 0
-        game_features.append(s_feature2)
-
-        # feature 3: determine if wolf within two steps left
-        if sheep_position[0] - wolf_position[0] <= 2 and sheep_position[0] - wolf_position[0] > 0:
-            s_feature3 = 1
-        else:
-            s_feature3 = 0
-        game_features.append(s_feature3)
-
-        # feature 4: determine if wolf within two steps right
-        if sheep_position[0] - wolf_position[0] >= -2 and sheep_position[0] - wolf_position[0] < 0:
-            s_feature4 = 1
-        else:
-            s_feature4 = 0
-        game_features.append(s_feature4)
-
-        s_feature5 = 0
-        s_feature6 = 0
-        s_feature7 = 0
-        s_feature8 = 0
+        # feature 1: x-distance wolf
+        s_feature1 = sheep_position[0] - wolf_position[0]
+        # feature 2: y-distance wolf
+        s_feature2 = sheep_position[1] - wolf_position[1]
 
         # determine closest food:
         food_distance = 1000
@@ -112,27 +84,19 @@ class IntrepidIbex():
                 food_distance = distance
                 food_goal = food_item
 
-        if food_goal != None:
-            # feature 5: determine if closest food is below the sheep
-            if sheep_position[1] - food_goal[1] < 0:
-                s_feature5 = 1
+        # feature 3: x-distance to food
+        s_feature3 = 0
+        # feature 4: y-distance to food
+        s_feature4 = 0
 
-            # feature 6: determine if closest food is above the sheep
-            if sheep_position[1] - food_goal[1] > 0:
-                s_feature6 = 1
+        if food_goal:
+            s_feature3 = sheep_position[0] - food_goal[0]
+            s_feature4 = sheep_position[1] - food_goal[1]
 
-            # feature 7: determine if closest food is right of the sheep
-            if sheep_position[0] - food_goal[0] < 0:
-                s_feature7 = 1
-
-            # feature 8: determine if closest food is left of the sheep
-            if sheep_position[0] - food_goal[0] > 0:
-                s_feature8 = 1
-
-        game_features.append(s_feature5)
-        game_features.append(s_feature6)
-        game_features.append(s_feature7)
-        game_features.append(s_feature8)
+        game_features.append(s_feature1)
+        game_features.append(s_feature2)
+        game_features.append(s_feature3)
+        game_features.append(s_feature4)
 
         # add features and move to X_sheep and Y_sheep
         X_sheep.append(game_features)
