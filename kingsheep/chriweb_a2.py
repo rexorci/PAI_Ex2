@@ -71,9 +71,9 @@ class IntrepidIbex():
             y += 1
 
         # feature 1: x-distance wolf
-        s_feature1 = sheep_position[0] - wolf_position[0]
+        sf_x_wolf = sheep_position[0] - wolf_position[0]
         # feature 2: y-distance wolf
-        s_feature2 = sheep_position[1] - wolf_position[1]
+        sf_y_wolf = sheep_position[1] - wolf_position[1]
 
         # determine closest food:
         food_distance = 1000
@@ -85,18 +85,34 @@ class IntrepidIbex():
                 food_goal = food_item
 
         # feature 3: x-distance to food
-        s_feature3 = 0
+        sf_x_food = 0
         # feature 4: y-distance to food
-        s_feature4 = 0
-
+        sf_y_food = 0
         if food_goal:
-            s_feature3 = sheep_position[0] - food_goal[0]
-            s_feature4 = sheep_position[1] - food_goal[1]
+            sf_x_food = sheep_position[0] - food_goal[0]
+            sf_y_food = sheep_position[1] - food_goal[1]
 
-        game_features.append(s_feature1)
-        game_features.append(s_feature2)
-        game_features.append(s_feature3)
-        game_features.append(s_feature4)
+        # feature 5: is going up allowed?
+        sf_up = self.valid_move(sheep_position[0] - 1, sheep_position[1], field,
+                          figure, True)
+        # feature 6: is going down allowed?
+        sf_down = self.valid_move(sheep_position[0] + 1, sheep_position[1], field,
+                             figure, True)
+        # feature 7: is going right allowed?
+        sf_right = self.valid_move(sheep_position[0], sheep_position[1] + 1, field,
+                              figure, True)
+        # feature 8: is going left allowed?
+        sf_left = self.valid_move(sheep_position[0], sheep_position[1] - 1, field,
+                             figure, True)
+
+        game_features.append(sf_x_wolf)
+        game_features.append(sf_y_wolf)
+        game_features.append(sf_x_food)
+        game_features.append(sf_y_food)
+        game_features.append(sf_up)
+        game_features.append(sf_down)
+        game_features.append(sf_right)
+        game_features.append(sf_left)
 
         # add features and move to X_sheep and Y_sheep
         X_sheep.append(game_features)
@@ -164,3 +180,47 @@ class IntrepidIbex():
         result = wolf_model.predict(X_wolf)
 
         return result
+
+    @staticmethod
+    def valid_move(new_x, new_y, field, player, is_sheep=True):
+        # Neither the sheep nor the wolf, can step on a square outside the map. Imagine the map is surrounded by fences.
+        if new_x > FIELD_HEIGHT - 1:
+            return False
+        elif new_x < 0:
+            return False
+        elif new_y > FIELD_WIDTH - 1:
+            return False
+        elif new_y < 0:
+            return False
+
+        # Neither the sheep nor the wolf, can enter a square with a fence on.
+        if field[new_x][new_y] == CELL_FENCE:
+            return False
+
+        if (is_sheep):
+            # Sheep can not step on squares occupied by the wolf of the same player.
+            # Sheep can not step on squares occupied by the opposite sheep.
+            if player == 1:
+                if field[new_x][new_y] == CELL_SHEEP_2 or \
+                        field[new_x][new_y] == CELL_WOLF_1 or \
+                        field[new_x][new_y] == CELL_WOLF_2:
+                    return False
+            else:
+                if field[new_x][new_y] == CELL_SHEEP_1 or \
+                        field[new_x][new_y] == CELL_WOLF_2 or \
+                        field[new_x][new_y] == CELL_WOLF_1:
+                    return False
+        else:
+            # Wolfs can not step on squares occupied by the opponents wolf (wolfs block each other).
+            # Wolfs can not step on squares occupied by the sheep of the same player .
+            if '1' in player:
+                if field[new_x][new_y] == CELL_WOLF_2:
+                    return False
+                elif field[new_x][new_y] == CELL_SHEEP_1:
+                    return False
+            elif figure == CELL_WOLF_2:
+                if field[new_x][new_y] == CELL_WOLF_1:
+                    return False
+                elif field[new_x][new_y] == CELL_SHEEP_2:
+                    return False
+        return True
