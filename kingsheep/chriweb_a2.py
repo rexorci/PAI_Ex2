@@ -92,33 +92,64 @@ class IntrepidIbex():
             sf_x_food = sheep_position[0] - food_goal[0]
             sf_y_food = sheep_position[1] - food_goal[1]
 
-        # feature 5: is going up allowed?
-        sf_up = self.valid_move(sheep_position[0] - 1, sheep_position[1], field,
-                          figure, True)
-        # feature 6: is going down allowed?
-        sf_down = self.valid_move(sheep_position[0] + 1, sheep_position[1], field,
-                             figure, True)
-        # feature 7: is going right allowed?
-        sf_right = self.valid_move(sheep_position[0], sheep_position[1] + 1, field,
-                              figure, True)
-        # feature 8: is going left allowed?
-        sf_left = self.valid_move(sheep_position[0], sheep_position[1] - 1, field,
-                             figure, True)
+        # # feature 5: is going up allowed?
+        # sf_up = self.valid_move(sheep_position[0] - 1, sheep_position[1], field,
+        #                         figure, True)
+        # # feature 6: is going down allowed?
+        # sf_down = self.valid_move(sheep_position[0] + 1, sheep_position[1], field,
+        #                           figure, True)
+        # # feature 7: is going right allowed?
+        # sf_right = self.valid_move(sheep_position[0], sheep_position[1] + 1, field,
+        #                            figure, True)
+        # # feature 8: is going left allowed?
+        # sf_left = self.valid_move(sheep_position[0], sheep_position[1] - 1, field,
+        #                           figure, True)
 
-        game_features.append(sf_x_wolf)
-        game_features.append(sf_y_wolf)
-        game_features.append(sf_x_food)
-        game_features.append(sf_y_food)
-        game_features.append(sf_up)
-        game_features.append(sf_down)
-        game_features.append(sf_right)
-        game_features.append(sf_left)
+        # feature: value of moving left
+        sf_v_left = self.value_of_move_sheep(sheep_position[0] - 1, sheep_position[1], sheep_position, wolf_position, field,
+                                             food_goal,
+                                             figure)
+        # feature: value of moving up
+        sf_v_up = self.value_of_move_sheep(sheep_position[0], sheep_position[1] - 1, sheep_position, wolf_position, field,
+                                           food_goal,
+                                           figure)
+        # feature: value of not moving
+        sf_v_stay = self.value_of_move_sheep(sheep_position[0], sheep_position[1], sheep_position, wolf_position, field,
+                                             food_goal,
+                                             figure)
+        # feature: value of moving down
+        sf_v_down = self.value_of_move_sheep(sheep_position[0], sheep_position[1] + 1, sheep_position, wolf_position, field,
+                                             food_goal,
+                                             figure)
+        # feature: value of moving right
+        sf_v_right = self.value_of_move_sheep(sheep_position[0] + 1, sheep_position[1], sheep_position, wolf_position, field,
+                                              food_goal,
+                                              figure)
+
+        # game_features.append(sf_x_wolf)
+        # game_features.append(sf_y_wolf)
+        # game_features.append(sf_x_food)
+        # game_features.append(sf_y_food)
+        # game_features.append(sf_up)
+        # game_features.append(sf_down)
+        # game_features.append(sf_right)
+        # game_features.append(sf_left)
+        game_features.append(sf_v_left)
+        game_features.append(sf_v_up)
+        game_features.append(sf_v_stay)
+        game_features.append(sf_v_down)
+        game_features.append(sf_v_right)
 
         # add features and move to X_sheep and Y_sheep
         X_sheep.append(game_features)
 
         result = sheep_model.predict(X_sheep)
 
+        # MOVE_LEFT = -2
+        # MOVE_UP = -1
+        # MOVE_NONE = 0
+        # MOVE_DOWN = 1
+        # MOVE_RIGHT = 2
         return result
 
     def move_wolf(self, figure, field, wolf_model):
@@ -182,45 +213,79 @@ class IntrepidIbex():
         return result
 
     @staticmethod
-    def valid_move(new_x, new_y, field, player, is_sheep=True):
+    def valid_move(new_col, new_row, field, player, is_sheep=True):
         # Neither the sheep nor the wolf, can step on a square outside the map. Imagine the map is surrounded by fences.
-        if new_x > FIELD_HEIGHT - 1:
+        if new_row > FIELD_HEIGHT - 1:
             return False
-        elif new_x < 0:
+        elif new_row < 0:
             return False
-        elif new_y > FIELD_WIDTH - 1:
+        elif new_col > FIELD_WIDTH - 1:
             return False
-        elif new_y < 0:
+        elif new_col < 0:
             return False
 
         # Neither the sheep nor the wolf, can enter a square with a fence on.
-        if field[new_x][new_y] == CELL_FENCE:
+        if field[new_row][new_col] == CELL_FENCE:
             return False
 
-        if (is_sheep):
+        if is_sheep:
             # Sheep can not step on squares occupied by the wolf of the same player.
             # Sheep can not step on squares occupied by the opposite sheep.
             if player == 1:
-                if field[new_x][new_y] == CELL_SHEEP_2 or \
-                        field[new_x][new_y] == CELL_WOLF_1 or \
-                        field[new_x][new_y] == CELL_WOLF_2:
+                if field[new_row][new_col] == CELL_SHEEP_2 or \
+                        field[new_row][new_col] == CELL_WOLF_1 or \
+                        field[new_row][new_col] == CELL_WOLF_2:
                     return False
             else:
-                if field[new_x][new_y] == CELL_SHEEP_1 or \
-                        field[new_x][new_y] == CELL_WOLF_2 or \
-                        field[new_x][new_y] == CELL_WOLF_1:
+                if field[new_row][new_col] == CELL_SHEEP_1 or \
+                        field[new_row][new_col] == CELL_WOLF_2 or \
+                        field[new_row][new_col] == CELL_WOLF_1:
                     return False
         else:
             # Wolfs can not step on squares occupied by the opponents wolf (wolfs block each other).
             # Wolfs can not step on squares occupied by the sheep of the same player .
-            if '1' in player:
-                if field[new_x][new_y] == CELL_WOLF_2:
+            if player == 1:
+                if field[new_row][new_col] == CELL_WOLF_2:
                     return False
-                elif field[new_x][new_y] == CELL_SHEEP_1:
+                elif field[new_row][new_col] == CELL_SHEEP_1:
                     return False
-            elif figure == CELL_WOLF_2:
-                if field[new_x][new_y] == CELL_WOLF_1:
+            else:
+                if field[new_row][new_col] == CELL_WOLF_1:
                     return False
-                elif field[new_x][new_y] == CELL_SHEEP_2:
+                elif field[new_row][new_col] == CELL_SHEEP_2:
                     return False
         return True
+
+    def value_of_move_sheep(self, new_col, new_row, sheep_position, wolf_position, field, food_goal, player):
+        # TODO use all food items, not just the "closest" one. use weight-in-area
+
+        if self.valid_move(new_col, new_row, field, player, True):
+            move_value = 0
+
+            if self.manhattan_distance((new_col, new_row), wolf_position) < 3:
+                move_value -= 50
+
+            if food_goal:
+                # set direction of food
+                sf_col_food_before = abs(sheep_position[0] - food_goal[0])
+                sf_row_food_before = abs(sheep_position[1] - food_goal[1])
+                sf_col_food_after = abs(new_col - food_goal[0])
+                sf_row_food_after = abs(new_row - food_goal[1])
+
+                if sf_row_food_after > sf_row_food_before:
+                    move_value -= 3
+                elif sf_row_food_after < sf_row_food_before:
+                    move_value += 2
+                if sf_col_food_after > sf_col_food_before:
+                    move_value -= 3
+                elif sf_col_food_after < sf_col_food_before:
+                    move_value += 2
+
+            return move_value
+        else:
+            # never even attempt to go there
+            return -1000
+
+    @staticmethod
+    def manhattan_distance(origin, goal):
+        return abs(origin[0] - goal[0]) + abs(origin[1] - goal[1])

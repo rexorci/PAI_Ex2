@@ -26,6 +26,7 @@ import os.path
 from config import *
 from multiprocessing import Pool, TimeoutError
 
+
 # --- CLASSES ---
 
 class KsField:
@@ -62,13 +63,12 @@ class KsField:
                 # print('{:2d}  {}'.format(i, ''.join(line)))
             # print('    0123456789012345678')
 
-
         # if verbosity > 0:
-            # print('Scores: {}: {:3d}   {}: {:3d}'.format(self.name1, self.score1, self.name2, self.score2))
+        # print('Scores: {}: {:3d}   {}: {:3d}'.format(self.name1, self.score1, self.name2, self.score2))
 
     # Movement
 
-    def get_position(self,figure):
+    def get_position(self, figure):
         # Next statement is a list comprehension.
         # it first generated a list of all x's in self. field, where figure is in that particular x
         # it then returns the first element (which is the row that contaions the figure),
@@ -78,13 +78,13 @@ class KsField:
 
     def new_position(self, x_old, y_old, move):
         if move == MOVE_LEFT:
-            return (x_old, y_old-1)
+            return (x_old, y_old - 1)
         elif move == MOVE_RIGHT:
-            return (x_old, y_old+1)
+            return (x_old, y_old + 1)
         elif move == MOVE_UP:
-            return (x_old-1, y_old)
+            return (x_old - 1, y_old)
         elif move == MOVE_DOWN:
-            return (x_old+1, y_old)
+            return (x_old + 1, y_old)
 
     def valid(self, figure, x_new, y_new):
         # Rule book valid moves
@@ -94,7 +94,7 @@ class KsField:
             return False
         elif x_new < 0:
             return False
-        elif y_new > FIELD_WIDTH -1:
+        elif y_new > FIELD_WIDTH - 1:
             return False
         elif y_new < 0:
             return False
@@ -116,12 +116,11 @@ class KsField:
             elif self.field[x_new][y_new] == CELL_SHEEP_2:
                 return False
 
-
         # Sheep can not step on squares occupied by the wolf of the same player.
         # Sheep can not step on squares occupied by the opposite sheep.
         if figure == CELL_SHEEP_1:
             if self.field[x_new][y_new] == CELL_SHEEP_2 or \
-                self.field[x_new][y_new] == CELL_WOLF_1:
+                    self.field[x_new][y_new] == CELL_WOLF_1:
                 return False
         elif figure == CELL_SHEEP_2:
             if self.field[x_new][y_new] == CELL_SHEEP_1 or \
@@ -138,8 +137,7 @@ class KsField:
         else:
             return 0
 
-
-    def move(self, figure, move,reason):
+    def move(self, figure, move, reason):
         if move != MOVE_NONE:
             (x_old, y_old) = self.get_position(figure)
             (x_new, y_new) = self.new_position(x_old, y_old, move)
@@ -154,19 +152,19 @@ class KsField:
                 # is awarded.
 
                 if figure == CELL_SHEEP_1:
-                    if target_figure == CELL_WOLF_2:    
+                    if target_figure == CELL_WOLF_2:
                         self.field[x_old][y_old] = CELL_SHEEP_1_d
                         self.score2 += self.score1
-                        self.score1 = -1 
-                        return True,'sheep1 suicide'
+                        self.score1 = -1
+                        return True, 'sheep1 suicide'
                     else:
                         self.score1 += self.award(target_figure)
 
                 elif figure == CELL_SHEEP_2:
-                    if target_figure == CELL_WOLF_1:    
+                    if target_figure == CELL_WOLF_1:
                         self.field[x_old][y_old] = CELL_SHEEP_2_d
                         self.score1 += self.score2
-                        self.score2 = -1 
+                        self.score2 = -1
                         return True, 'sheep2 suicide'
                     else:
                         self.score2 += self.award(target_figure)
@@ -174,48 +172,47 @@ class KsField:
                 # If the wolf steps on a food object, the food object gets removed but no score is awarded.
 
                 elif figure == CELL_WOLF_1:
-                    if target_figure == CELL_SHEEP_2:   
+                    if target_figure == CELL_SHEEP_2:
                         self.field[x_new][y_new] = CELL_SHEEP_2_d
                         self.score1 += self.score2
-                        self.score2 = -1 
+                        self.score2 = -1
                         return True, 'sheep2 eaten'
 
                 elif figure == CELL_WOLF_2:
-                    if target_figure == CELL_SHEEP_1:   
+                    if target_figure == CELL_SHEEP_1:
                         self.field[x_new][y_new] = CELL_SHEEP_1_d
                         self.score2 += self.score1
-                        self.score1 = -1 
+                        self.score1 = -1
                         return True, 'sheep1 eaten'
 
                 # actual figure move
                 self.field[x_new][y_new] = figure
                 self.field[x_old][y_old] = CELL_EMPTY
-                return False,reason
-            
-            else: #if move is not valid
-                return False,reason
-        
-        else: #if move = none
-            return False,reason
+                return False, reason
 
+            else:  # if move is not valid
+                return False, reason
+
+        else:  # if move = none
+            return False, reason
 
 
 #   --- GAME PLAY ---   ----------------------------
 
-def kingsheep_iteration(i, ks, player1, player2,reason,player1_sheep,player1_wolf,player2_sheep,player2_wolf):
+def kingsheep_iteration(i, ks, player1, player2, reason, player1_sheep, player1_wolf, player2_sheep, player2_wolf):
     game_over = False
 
-    #each move is placed in a pool to limit the think time the agent gets
+    # each move is placed in a pool to limit the think time the agent gets
 
-    #sheep1 move
+    # sheep1 move
     p1 = Pool()
-    if player1.name == 'Random Player' or player1.name == 'CSA':
-        r1 = p1.apply_async(player1.move_sheep,(1,ks.get_field()))
+    if player1.name == 'Random Player' or player1.name == 'CSA' or player1.name == 'Greedy Player':
+        r1 = p1.apply_async(player1.move_sheep, (1, ks.get_field()))
     else:
-        r1 = p1.apply_async(player1.move_sheep,(1,ks.get_field(),player1_sheep))
+        r1 = p1.apply_async(player1.move_sheep, (1, ks.get_field(), player1_sheep))
     try:
         move1 = r1.get(MAX_CALC_TIME)
-        result1_game_over,result1_reason = ks.move(CELL_SHEEP_1, move1,reason)
+        result1_game_over, result1_reason = ks.move(CELL_SHEEP_1, move1, reason)
         if result1_reason != '':
             reason = result1_reason
         game_over = game_over or result1_game_over
@@ -225,16 +222,16 @@ def kingsheep_iteration(i, ks, player1, player2,reason,player1_sheep,player1_wol
     p1.close()
     p1.terminate()
     p1.join()
-    
-    #sheep2 move
+
+    # sheep2 move
     p2 = Pool()
-    if  player2.name == 'Random Player' or player2.name == 'CSA':
-        r2 = p2.apply_async(player2.move_sheep,(2,ks.get_field()))
+    if player2.name == 'Random Player' or player2.name == 'CSA' or player2.name == 'Greedy Player':
+        r2 = p2.apply_async(player2.move_sheep, (2, ks.get_field()))
     else:
-        r2 = p2.apply_async(player2.move_sheep,(2,ks.get_field(),player2_sheep))
+        r2 = p2.apply_async(player2.move_sheep, (2, ks.get_field(), player2_sheep))
     try:
         move2 = r2.get(MAX_CALC_TIME)
-        result2_game_over,result2_reason = ks.move(CELL_SHEEP_2, move2,reason)
+        result2_game_over, result2_reason = ks.move(CELL_SHEEP_2, move2, reason)
         if result2_reason != '':
             reason = result2_reason
         game_over = game_over or result2_game_over
@@ -243,18 +240,18 @@ def kingsheep_iteration(i, ks, player1, player2,reason,player1_sheep,player1_wol
         reason = 'timeout2'
     p2.close()
     p2.terminate()
-    p2.join() 
-   
+    p2.join()
+
     if i % 2 == 0 and not game_over:
-        #wolf1 move
+        # wolf1 move
         p3 = Pool()
-        if  player1.name == 'Random Player' or player1.name == 'CSA':
-            r3 = p3.apply_async(player1.move_wolf,(1,ks.get_field()))
+        if player1.name == 'Random Player' or player1.name == 'CSA' or player1.name == 'Greedy Player':
+            r3 = p3.apply_async(player1.move_wolf, (1, ks.get_field()))
         else:
-            r3 = p3.apply_async(player1.move_wolf,(1,ks.get_field(),player1_wolf))
+            r3 = p3.apply_async(player1.move_wolf, (1, ks.get_field(), player1_wolf))
         try:
             move3 = r3.get(MAX_CALC_TIME)
-            result3_game_over,result3_reason = ks.move(CELL_WOLF_1, move3,reason)
+            result3_game_over, result3_reason = ks.move(CELL_WOLF_1, move3, reason)
             if result3_reason != '':
                 reason = result3_reason
             game_over = game_over or result3_game_over
@@ -264,16 +261,16 @@ def kingsheep_iteration(i, ks, player1, player2,reason,player1_sheep,player1_wol
         p3.close()
         p3.terminate()
         p3.join()
-        
-        #wolf2 move
+
+        # wolf2 move
         p4 = Pool()
-        if player2.name == 'Random Player' or player2.name == 'CSA':
-            r4 = p4.apply_async(player2.move_wolf,(2,ks.get_field()))
+        if player2.name == 'Random Player' or player2.name == 'CSA' or player2.name == 'Greedy Player':
+            r4 = p4.apply_async(player2.move_wolf, (2, ks.get_field()))
         else:
-            r4 = p4.apply_async(player2.move_wolf,(2,ks.get_field(),player2_wolf))
+            r4 = p4.apply_async(player2.move_wolf, (2, ks.get_field(), player2_wolf))
         try:
             move4 = r4.get(MAX_CALC_TIME)
-            result4_game_over,result4_reason = ks.move(CELL_WOLF_2, move4,reason)
+            result4_game_over, result4_reason = ks.move(CELL_WOLF_2, move4, reason)
             if result4_reason != '':
                 reason = result4_reason
             game_over = game_over or result4_game_over
@@ -289,8 +286,7 @@ def kingsheep_iteration(i, ks, player1, player2,reason,player1_sheep,player1_wol
         ks.print_ks()
         time.sleep(slowdown)
 
-    return game_over,reason
-
+    return game_over, reason
 
 
 def kingsheep_play(player1class, player2class, map_name):
@@ -299,7 +295,7 @@ def kingsheep_play(player1class, player2class, map_name):
     #   --- SET UP GAME ---
 
     # if verbosity > 2:
-        # print('\n >>> Starting up Kingsheep\n')
+    # print('\n >>> Starting up Kingsheep\n')
 
     # init field
 
@@ -307,19 +303,18 @@ def kingsheep_play(player1class, player2class, map_name):
     player1 = player1class()
     player2 = player2class()
 
-
     ks.name1 = player1.name
     ks.name2 = player2.name
 
-    #random player is an exception, as it does not use a model
-    if ks.name1 != 'Random Player' and ks.name1 != 'CSA':
+    # random player is an exception, as it does not use a model
+    if ks.name1 != 'Random Player' and ks.name1 != 'CSA' and ks.name1 != 'Greedy Player':
         player1_sheep = player1.get_sheep_model()
         player1_wolf = player1.get_wolf_model()
     else:
         player1_sheep = None
         player1_wolf = None
-    
-    if ks.name2 != 'Random Player' and ks.name2 != 'CSA':
+
+    if ks.name2 != 'Random Player' and ks.name2 != 'CSA' and ks.name2 != 'Greedy Player':
         player2_sheep = player2.get_sheep_model()
         player2_wolf = player2.get_wolf_model()
     else:
@@ -335,12 +330,14 @@ def kingsheep_play(player1class, player2class, map_name):
 
     if graphics:
         import ksgraphics
-        ksgraphics.init(NO_ITERATIONS, FIELD_WIDTH, FIELD_HEIGHT, ks, player1, player2, debug, verbosity, slowdown,player1_sheep,player1_wolf,player2_sheep,player2_wolf)
+        ksgraphics.init(NO_ITERATIONS, FIELD_WIDTH, FIELD_HEIGHT, ks, player1, player2, debug, verbosity, slowdown,
+                        player1_sheep, player1_wolf, player2_sheep, player2_wolf)
 
     else:
         iterations_run = 0
-        for i in range(1, NO_ITERATIONS+1):
-            game_over,reason = kingsheep_iteration(i, ks, player1, player2,reason,player1_sheep,player1_wolf,player2_sheep,player2_wolf)
+        for i in range(1, NO_ITERATIONS + 1):
+            game_over, reason = kingsheep_iteration(i, ks, player1, player2, reason, player1_sheep, player1_wolf,
+                                                    player2_sheep, player2_wolf)
 
             iterations_run += 1
             if game_over:
@@ -350,41 +347,39 @@ def kingsheep_play(player1class, player2class, map_name):
 
     elapsed_time = time.perf_counter() - start_time
 
-
-    #if it's a tie, the points are distributed equally
+    # if it's a tie, the points are distributed equally
     if ks.score1 == ks.score2:
         ks.grading1 = 0.5
         ks.grading2 = 0.5
     elif ks.score1 > ks.score2:
-        #if sheep 2 was eaten, player 1 gets all the points
+        # if sheep 2 was eaten, player 1 gets all the points
         if ks.score2 == -1:
             ks.grading1 = 1
             ks.grading2 = 0
         # else the winner gets 0.1, 0.9 is distributed based on points gathered
-        else: 
-            ks.grading1 = 0.1 + round((0.9*ks.score1/(ks.score1+ks.score2)),3)
-            ks.grading2 = 0 + round((0.9*ks.score2/(ks.score1+ks.score2)),3)
+        else:
+            ks.grading1 = 0.1 + round((0.9 * ks.score1 / (ks.score1 + ks.score2)), 3)
+            ks.grading2 = 0 + round((0.9 * ks.score2 / (ks.score1 + ks.score2)), 3)
     else:
-        #if sheep 1 was eaten, player 1 gets all the points
+        # if sheep 1 was eaten, player 1 gets all the points
         if ks.score1 == -1:
             ks.grading1 = 0
             ks.grading2 = 1
         # else the winner gets 0.1, 0.9 is distributed based on points gathered
         else:
-            ks.grading1 = 0 + round((0.9*ks.score1/(ks.score1+ks.score2)),3)
-            ks.grading2 = 0.1 + round((0.9*ks.score2/(ks.score1+ks.score2)),3)
+            ks.grading1 = 0 + round((0.9 * ks.score1 / (ks.score1 + ks.score2)), 3)
+            ks.grading2 = 0.1 + round((0.9 * ks.score2 / (ks.score1 + ks.score2)), 3)
 
     print('' + map_name + ',' + str(round(ks.grading1, 2)) + ',' + str(round(ks.grading2, 2)))
 
     # print('Player one got ' + str(round(ks.grading1,2)) + ' points, Player two got ' + str(round(ks.grading2,2)) + ' points')
 
     # if verbosity > 2 and not graphics:
-        # print('\n >>> Finishing Kingsheep after ' + str(iterations_run) + ' iterations \n\nFinal Field:')
+    # print('\n >>> Finishing Kingsheep after ' + str(iterations_run) + ' iterations \n\nFinal Field:')
 
     ks.print_ks()
     # if verbosity > 1:
     #     print("  Elapsed time: " + str(elapsed_time))
-
 
 
 # --- GLOBAL VARIABLES ----
@@ -393,6 +388,7 @@ debug = False
 verbosity = 5
 graphics = False
 slowdown = 0.0
+
 
 def main():
     # command line: -p1m ksplayers -p1n PassivePlayer -p2m ksplayers -p2n KingsheepPlayer
@@ -407,19 +403,19 @@ def main():
     parser.add_argument("-v", "--verbosity", type=int,
                         help="verbosity of the output (1: elapsed time, 2: system messages, 3: ending board")
 
-    parser.add_argument("-p1m", "--player1module",help="name of module that defines player 1")
-    parser.add_argument("-p1n", "--player1name",help="name of class that defines player 1")
+    parser.add_argument("-p1m", "--player1module", help="name of module that defines player 1")
+    parser.add_argument("-p1n", "--player1name", help="name of class that defines player 1")
 
-    parser.add_argument("-p2m", "--player2module",help="name of module that defines player 2")
-    parser.add_argument("-p2n", "--player2name",help="name of class that defines player 2")
+    parser.add_argument("-p2m", "--player2module", help="name of module that defines player 2")
+    parser.add_argument("-p2n", "--player2name", help="name of class that defines player 2")
 
-    parser.add_argument("-g", "--graphics", help="turn on graphics based on arcade (http://arcade.academy/index.html)", action="store_true")
+    parser.add_argument("-g", "--graphics", help="turn on graphics based on arcade (http://arcade.academy/index.html)",
+                        action="store_true")
 
     parser.add_argument("-s", "--slowdown", type=float,
                         help="slowdown in each iteration in seconds (fractions allowed")
 
     parser.add_argument("map", help="map file")
-
 
     args = parser.parse_args()
     if args.debug:
@@ -463,6 +459,7 @@ def main():
         kingsheep_play(player1class, player2class, map_name)
     except Exception as ex:
         print('' + map_name + ',0,0,Exception: [' + str(ex) + ']')
+
 
 if __name__ == "__main__":
     main()
