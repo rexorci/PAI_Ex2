@@ -58,17 +58,26 @@ class IntrepidIbex():
         # get positions of sheep, wolf and food items
         food = []
         y = 0
-        for field_row in field:
-            x = 0
-            for item in field_row:
-                if item == sheep:
-                    sheep_position = (x, y)
-                elif item == wolf:
-                    wolf_position = (x, y)
-                elif item == CELL_RHUBARB or item == CELL_GRASS:
-                    food.append((x, y))
-                x += 1
-            y += 1
+
+        if figure == 1:
+            items, sheep_position, wolf_position = self.get_all_field_items(CELL_SHEEP_2, CELL_WOLF_2,
+                                                                            CELL_SHEEP_1, CELL_WOLF_1, field)
+        else:
+            items, sheep_position, wolf_position = self.get_all_field_items(CELL_SHEEP_1, CELL_WOLF_1,
+                                                                            CELL_SHEEP_2, CELL_WOLF_2, field)
+
+        # for field_row in field:
+        #     x = 0
+        #     for item in field_row:
+        #         if item == sheep:
+        #             sheep_position = (x, y)
+        #             items.append()
+        #         elif item == wolf:
+        #             wolf_position = (x, y)
+        #         elif item == CELL_RHUBARB or item == CELL_GRASS:
+        #             food.append((x, y))
+        #         x += 1
+        #     y += 1
 
         # feature 1: x-distance wolf
         sf_x_wolf = sheep_position[0] - wolf_position[0]
@@ -105,26 +114,54 @@ class IntrepidIbex():
         # sf_left = self.valid_move(sheep_position[0], sheep_position[1] - 1, field,
         #                           figure, True)
 
+        # TODO KEEP WORKING FROM HERE (adjust to use all items
         # feature: value of moving left
-        sf_v_left = self.value_of_move_sheep(sheep_position[0] - 1, sheep_position[1], sheep_position, wolf_position, field,
-                                             food_goal,
-                                             figure)
+        sf_v_left = self.value_of_move_sheep2(sheep_position[0] - 1, sheep_position[1], field, items, figure)
         # feature: value of moving up
-        sf_v_up = self.value_of_move_sheep(sheep_position[0], sheep_position[1] - 1, sheep_position, wolf_position, field,
-                                           food_goal,
-                                           figure)
+        sf_v_up = self.value_of_move_sheep2(sheep_position[0], sheep_position[1] - 1, sheep_position, wolf_position,
+                                            field,
+                                            food_goal,
+                                            figure)
         # feature: value of not moving
-        sf_v_stay = self.value_of_move_sheep(sheep_position[0], sheep_position[1], sheep_position, wolf_position, field,
-                                             food_goal,
-                                             figure)
-        # feature: value of moving down
-        sf_v_down = self.value_of_move_sheep(sheep_position[0], sheep_position[1] + 1, sheep_position, wolf_position, field,
-                                             food_goal,
-                                             figure)
-        # feature: value of moving right
-        sf_v_right = self.value_of_move_sheep(sheep_position[0] + 1, sheep_position[1], sheep_position, wolf_position, field,
+        sf_v_stay = self.value_of_move_sheep2(sheep_position[0], sheep_position[1], sheep_position, wolf_position,
+                                              field,
                                               food_goal,
                                               figure)
+        # feature: value of moving down
+        sf_v_down = self.value_of_move_sheep2(sheep_position[0], sheep_position[1] + 1, sheep_position, wolf_position,
+                                              field,
+                                              food_goal,
+                                              figure)
+        # feature: value of moving right
+        sf_v_right = self.value_of_move_sheep2(sheep_position[0] + 1, sheep_position[1], sheep_position, wolf_position,
+                                               field,
+                                               food_goal,
+                                               figure)
+
+        # # feature: value of moving left
+        # sf_v_left = self.value_of_move_sheep(sheep_position[0] - 1, sheep_position[1], sheep_position, wolf_position,
+        #                                      field,
+        #                                      food_goal,
+        #                                      figure)
+        # # feature: value of moving up
+        # sf_v_up = self.value_of_move_sheep(sheep_position[0], sheep_position[1] - 1, sheep_position, wolf_position,
+        #                                    field,
+        #                                    food_goal,
+        #                                    figure)
+        # # feature: value of not moving
+        # sf_v_stay = self.value_of_move_sheep(sheep_position[0], sheep_position[1], sheep_position, wolf_position, field,
+        #                                      food_goal,
+        #                                      figure)
+        # # feature: value of moving down
+        # sf_v_down = self.value_of_move_sheep(sheep_position[0], sheep_position[1] + 1, sheep_position, wolf_position,
+        #                                      field,
+        #                                      food_goal,
+        #                                      figure)
+        # # feature: value of moving right
+        # sf_v_right = self.value_of_move_sheep(sheep_position[0] + 1, sheep_position[1], sheep_position, wolf_position,
+        #                                       field,
+        #                                       food_goal,
+        #                                       figure)
 
         # game_features.append(sf_x_wolf)
         # game_features.append(sf_y_wolf)
@@ -257,7 +294,7 @@ class IntrepidIbex():
         return True
 
     def value_of_move_sheep(self, new_col, new_row, sheep_position, wolf_position, field, food_goal, player):
-        # TODO use all food items, not just the "closest" one. use weight-in-area
+        # TODO give worth to every item. then multiply 1/distance (manhattan) with worth. we end up with 5 different worths.
 
         if self.valid_move(new_col, new_row, field, player, True):
             move_value = 0
@@ -289,3 +326,31 @@ class IntrepidIbex():
     @staticmethod
     def manhattan_distance(origin, goal):
         return abs(origin[0] - goal[0]) + abs(origin[1] - goal[1])
+
+    def get_all_field_items(self, enemy_sheep_label, enemy_wolf_label, friendly_sheep_label, friendly_wolf_label,
+                            field):
+        items = []
+
+        row = 0
+        for field_row in field:
+            col = 0
+            for item in field_row:
+                if item == CELL_GRASS:
+                    items.append(((row, col), 1))
+                elif item == CELL_RHUBARB:
+                    items.append(((row, col), 10))
+                elif item == enemy_sheep_label:
+                    items.append(((row, col), 3))
+                elif item == enemy_wolf_label:
+                    wolf_position = (row, col)
+                    items.append(((row, col), -8))
+                elif item == friendly_sheep_label:
+                    sheep_position = (row, col)
+                elif item == friendly_wolf_label:
+                    items.append(((row, col), 0))
+                elif item == CELL_FENCE:
+                    items.append(((row, col), -0.2))
+                col += 1
+            row += 1
+
+        return items, sheep_position, wolf_position
