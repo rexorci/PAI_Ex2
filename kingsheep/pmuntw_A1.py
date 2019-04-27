@@ -207,7 +207,6 @@ class AStar():
                 my_sheep = CELL_SHEEP_1
             else:
                 my_sheep = CELL_SHEEP_2
-            # TODO implement CELL_SHEEP_2_d?
             player_position = self.get_player_position(my_sheep, field)
             #print('field', field)
             #print('player_position', player_position)
@@ -241,7 +240,6 @@ class AStar():
             #print('player_position', player_position)
             # print('figure', figure)
             start = player_position
-            # TODO implement CELL_SHEEP_2_d?
             end = self.get_player_position(enemy_sheep, field)
             #print('end', end)
             path = self.a_star(start, end, field, True, figure)
@@ -261,7 +259,6 @@ class AStar():
         allowed_fields_wolf = [CELL_EMPTY, CELL_GRASS, CELL_RHUBARB]
         allowed_fields_wolf.extend([CELL_SHEEP_2, CELL_SHEEP_2_d]) if figure == 1 else allowed_fields_wolf.extend(
             [CELL_SHEEP_1, CELL_SHEEP_1_d])
-        # TODO add enemy wolf distance
         allowed_fields = allowed_fields_wolf if is_wolf else allowed_fields_sheep
 
         for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0)]:  # Adjacent squares
