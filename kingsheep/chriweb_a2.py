@@ -69,7 +69,10 @@ class IntrepidIbex():
         return result
 
     def get_features_sheep(self, figure, field, sheep_label, wolf_label):
-        # 1. get weighted map and all food items
+
+        # TODO input the values that jupyter would give and check if we also get an error !
+
+         # 1. get weighted map and all food items
         if figure == 1:
             weighted_field, food_items, sheep_position, wolf_position = self.get_all_field_items(CELL_SHEEP_2,
                                                                                                  CELL_WOLF_2,
@@ -427,6 +430,7 @@ class IntrepidIbex():
 
     def get_best_score_for_sheep_direction(self, food_items, move_direction, sheep_label, wolf_label, sheep_position,
                                            wolf_position, field):
+
         coord_after_move = self.determine_coord_after_move(move_direction, sheep_position)
         if self.valid_move(sheep_label, coord_after_move[0], coord_after_move[1], field):
             move_score = 0
@@ -440,10 +444,10 @@ class IntrepidIbex():
                 move_score += 50
 
             path_to_wolf = self.a_star_pathfinding(sheep_position, wolf_position, field, wolf_label)
-
+            return path_to_wolf #TODO remove
             if len(path_to_wolf) < 3:
                 # if self.manhattan_distance((coord_after_move[0], coord_after_move[1]), wolf_position) < 3:
-                move_score += 990
+                move_score += 100
 
             return move_score
         else:
