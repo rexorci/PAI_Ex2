@@ -57,6 +57,7 @@ class IntrepidIbex():
 
     def get_features_sheep(self, figure, field):
         game_features = []
+        game_features.append(figure)
         game_features.append(self.get_sheep_move_a1(figure, field))
         return game_features
 
@@ -75,6 +76,7 @@ class IntrepidIbex():
 
     def get_features_wolf(self, figure, field):
         game_features = []
+        game_features.append(figure)
         game_features.append(self.get_wolf_move_a1(figure, field))
         return  game_features
 
