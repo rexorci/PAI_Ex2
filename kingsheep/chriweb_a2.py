@@ -55,36 +55,148 @@ class IntrepidIbex():
         # MOVE_RIGHT = 2
         return result
 
-    def get_features_sheep(self, figure, field):
+    def get_features_sheep(self, player_number, field):
         game_features = []
-        game_features.append(figure)
-        game_features.append(self.get_sheep_move_a1(figure, field))
+        # player 1 starts in top half, so it may change the "general direction"
+        game_features.append(player_number)
+        # # behavior changes if no food is left
+        # if self.food_present(field):
+        #     game_features.append(1)
+        # else:
+        #     game_features.append(0)
+
+        # # we want to go into other direction than wolf, especially when no food is left
+        # game_features.append(self.get_enemy_direction(player_number, field, False))
+        #
+        # # how far is the wolf away?
+        # game_features.append(self.get_enemy_distance(player_number, field, False))
+
+        # we want to go into direction of enemy sheep to reduce their possible food sources
+        game_features.append(self.get_enemy_direction(player_number, field, True))
+
+        # how far is the sheep away?
+        # game_features.append(self.get_enemy_distance(player_number, field, True))
+        #
+        # # direction with most degrees of freedom
+        # game_features.append(self.get_most_free_direction(player_number, field, True))
+
+        # building on the direction as calculated in assignment 1 via a weighted a-star
+        game_features.append(self.get_sheep_move_a1(player_number, field))
         return game_features
 
-    def move_wolf(self, figure, field, wolf_model):
+    def get_enemy_direction(self, player_number, field, enemy_is_sheep=True):
+        if player_number == 1:
+            sheep_position = self.get_player_position(CELL_SHEEP_1, field)
+            if enemy_is_sheep:
+                enemy_position = self.get_player_position(CELL_SHEEP_2, field)
+            else:
+                enemy_position = self.get_player_position(CELL_WOLF_2, field)
+        else:
+            sheep_position = self.get_player_position(CELL_SHEEP_2, field)
+            if enemy_is_sheep:
+                enemy_position = self.get_player_position(CELL_SHEEP_1, field)
+            else:
+                enemy_position = self.get_player_position(CELL_WOLF_1, field)
 
+        dist_col = enemy_position[0] - sheep_position[0]
+        dist_row = enemy_position[1] - sheep_position[1]
+
+        recommended_move = MOVE_NONE
+        if abs(dist_col) < abs(dist_row):
+            # recommend going up or down
+            if dist_row < 0:
+                if enemy_is_sheep:
+                    recommended_move = MOVE_UP
+                else:
+                    recommended_move = MOVE_DOWN
+            elif dist_row > 0:
+                if enemy_is_sheep:
+                    recommended_move = MOVE_DOWN
+                else:
+                    recommended_move = MOVE_UP
+        elif abs(dist_col) > abs(dist_row):
+            # recommend going left or right
+            if dist_col < 0:
+                if enemy_is_sheep:
+                    recommended_move = MOVE_LEFT
+                else:
+                    recommended_move = MOVE_RIGHT
+            elif dist_col > 0:
+                if enemy_is_sheep:
+                    recommended_move = MOVE_RIGHT
+                else:
+                    recommended_move = MOVE_LEFT
+        return recommended_move
+
+    def get_enemy_distance(self, player_number, field, enemy_is_sheep=True):
+        if player_number == 1:
+            sheep_position = self.get_player_position(CELL_SHEEP_1, field)
+            if enemy_is_sheep:
+                enemy_position = self.get_player_position(CELL_SHEEP_2, field)
+            else:
+                enemy_position = self.get_player_position(CELL_WOLF_2, field)
+        else:
+            sheep_position = self.get_player_position(CELL_SHEEP_2, field)
+            if enemy_is_sheep:
+                enemy_position = self.get_player_position(CELL_SHEEP_1, field)
+            else:
+                enemy_position = self.get_player_position(CELL_WOLF_1, field)
+
+        return self.manhattan_distance(sheep_position, enemy_position)
+
+    def move_wolf(self, figure, field, wolf_model):
         # create empty feature array for this game state
         X_wolf = []
 
         # add features and move to X_wolf and Y_wolf
-
         X_wolf.append(self.get_features_wolf(figure, field))
 
         result = wolf_model.predict(X_wolf)
 
         return result
 
-    def get_features_wolf(self, figure, field):
+    def get_most_free_direction(self, player_number, field, is_sheep):
+        if player_number == 1:
+            if is_sheep:
+                figure = CELL_SHEEP_1
+            else:
+                figure = CELL_WOLF_1
+        else:
+            if is_sheep:
+                figure = CELL_SHEEP_2
+            else:
+                figure = CELL_WOLF_2
+        figure_pos = self.get_player_position(figure, field)
+        dof_directions = []
+        dof_directions.append(len(self.get_valid_moves(figure, (figure_pos[0], figure_pos[1] - 1), field)))
+        dof_directions.append(len(self.get_valid_moves(figure, (figure_pos[0] - 1, figure_pos[1]), field)))
+        dof_directions.append(len(self.get_valid_moves(figure, (figure_pos[0], figure_pos[1]), field)))
+        dof_directions.append(len(self.get_valid_moves(figure, (figure_pos[0] + 1, figure_pos[1]), field)))
+        dof_directions.append(len(self.get_valid_moves(figure, (figure_pos[0], figure_pos[1] + 1), field)))
+        # getting the values corresponding to the directions. makes debugging easier.
+        return dof_directions.index(max(dof_directions)) - 2
+
+    def get_features_wolf(self, player_number, field):
         game_features = []
-        game_features.append(figure)
-        game_features.append(self.get_wolf_move_a1(figure, field))
-        return  game_features
+
+        # player 1 starts in top half, so it may change the "general direction"
+        game_features.append(player_number)
+
+        # we want to go into direction of sheep
+        game_features.append(self.get_enemy_direction(player_number, field, True))
+
+        # direction with most degrees of freedom
+        game_features.append(self.get_most_free_direction(player_number, field, False))
+
+        game_features.append(self.get_wolf_move_a1(player_number, field))
+        return game_features
 
     def get_player_position(self, figure, field):
-        x = [x for x in field if figure in x][0]
-        return (field.index(x), x.index(figure))
-
-        # defs for sheep
+        try:
+            x = [x for x in field if figure in x][0]
+            return (field.index(x), x.index(figure))
+        except:
+            return 0, 0
 
     def get_sheep_move_a1(self, player_number, field):
         try:
@@ -167,7 +279,7 @@ class IntrepidIbex():
 
     @staticmethod
     def weighted_sort(distance, worth):
-        return distance * 1.8 / worth
+        return distance ** 1.1 / worth
 
     def gather_move_sheep(self, field, figure, player_number):
         """
